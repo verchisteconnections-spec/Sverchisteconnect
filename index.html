@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VERCHISTE CONNECTIONS | Admin, PureSkill & CRP Ecosystem</title>
+
+  <!-- SEO basics so search engines can find & describe the site -->
+  <meta name="description" content="Verchiste Connections connects businesses to student promoters via the CRP marketplace and COSMO rewards, and helps students showcase talent through PureSkill.">
+  <meta property="og:title" content="Verchiste Connections">
+  <meta property="og:description" content="Business Support SaaS & Talent Portal">
+  <meta property="og:type" content="website">
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Outfit:wght@400;600;700;900&display=swap" rel="stylesheet">
+
+  <!-- Firebase (compat SDKs - simplest to wire into plain HTML/JS) -->
+  <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-storage-compat.js"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            navy: { 950: '#030712', 900: '#060e1a', 800: '#0a1526', 700: '#112240' },
+            skybrand: { 400: '#38bdf8', 500: '#00BFFF', 600: '#0284c7' },
+            sparkle: '#f0f9ff'
+          },
+          fontFamily: {
+            sans: ['Plus Jakarta Sans', 'sans-serif'],
+            heading: ['Outfit', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body { background-color: #060e1a; color: #ffffff; overflow-x: hidden; font-family: 'Plus Jakarta Sans', sans-serif; }
+    #cloud-canvas { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 0; pointer-events: none; }
+    .glass-card { background: rgba(10, 21, 38, 0.70); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(0, 191, 255, 0.25); box-shadow: 0 10px 30px -10px rgba(0, 191, 255, 0.15); }
+    .glass-card:hover { border-color: rgba(0, 191, 255, 0.5); box-shadow: 0 15px 35px -5px rgba(0, 191, 255, 0.25); }
+    .glass-nav { background: rgba(6, 14, 26, 0.90); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(0, 191, 255, 0.2); }
+    .logo-stage { perspective: 1000px; width: 180px; height: 180px; position: relative; margin: 0 auto; }
+    .orbit-ring-1 { position: absolute; inset: 0; border: 2px solid rgba(0, 191, 255, 0.8); border-radius: 50%; box-shadow: 0 0 20px rgba(0, 191, 255, 0.6), inset 0 0 20px rgba(0, 191, 255, 0.4); animation: orbitRotate1 8s linear infinite; }
+    .orbit-ring-2 { position: absolute; inset: -10px; border: 1.5px dashed rgba(255, 255, 255, 0.7); border-radius: 50%; animation: orbitRotate2 12s linear infinite reverse; }
+    @keyframes orbitRotate1 { 0% { transform: rotateX(65deg) rotateY(0deg) rotateZ(0deg); } 100% { transform: rotateX(65deg) rotateY(360deg) rotateZ(360deg); } }
+    @keyframes orbitRotate2 { 0% { transform: rotateX(45deg) rotateY(360deg) rotateZ(0deg); } 100% { transform: rotateX(45deg) rotateY(0deg) rotateZ(360deg); } }
+    .vc-badge { background: linear-gradient(135deg, #00BFFF 0%, #005f9e 100%); box-shadow: 0 0 30px rgba(0, 191, 255, 0.8); }
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: #060e1a; }
+    ::-webkit-scrollbar-thumb { background: #00BFFF; border-radius: 4px; }
+    .modal-overlay { background: rgba(3,7,18,0.85); backdrop-filter: blur(6px); }
+    .nav-btn.active { color: #38bdf8; background: rgba(0,191,255,0.1); }
+  </style>
+</head>
+<body class="relative min-h-screen text-slate-100 selection:bg-skybrand-500 selection:text-navy-950">
+
+  <canvas id="cloud-canvas"></canvas>
+
+  <div class="relative z-10 flex flex-col min-h-screen">
+
+    <!-- TOP NAVIGATION BAR -->
+    <header class="sticky top-0 z-50 glass-nav transition-all duration-300">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+
+        <a href="#home" onclick="handleLogoClick(event)" class="flex items-center gap-3 group select-none cursor-pointer">
+          <div class="w-11 h-11 rounded-xl vc-badge flex items-center justify-center font-heading font-black text-xl text-navy-950 tracking-tighter transform group-hover:scale-105 transition">VC</div>
+          <div class="flex flex-col">
+            <span class="font-heading font-extrabold text-lg tracking-wider text-white group-hover:text-skybrand-400 transition">VERCHISTE</span>
+            <span class="text-[10px] tracking-[0.25em] text-skybrand-400 font-semibold uppercase -mt-1">Connections</span>
+          </div>
+        </a>
+
+        <a href="tel:+2349067304019" class="opacity-0 select-none cursor-default px-3 py-1 inline-block text-xs" aria-hidden="true" tabindex="-1">call +2349067304019</a>
+
+        <nav class="hidden lg:flex items-center space-x-1">
+          <button onclick="switchTab('brands')" id="nav-brands" class="nav-btn px-3 py-2 rounded-lg text-xs font-bold hover:text-skybrand-400 transition flex items-center gap-2"><i class="fa-solid fa-briefcase text-skybrand-400"></i> BRANDS</button>
+          <button onclick="switchTab('pureskill')" id="nav-pureskill" class="nav-btn px-3 py-2 rounded-lg text-xs font-bold hover:text-skybrand-400 transition flex items-center gap-2"><i class="fa-solid fa-brain text-purple-400"></i> PURESKILL</button>
+          <button onclick="switchTab('crp')" id="nav-crp" class="nav-btn px-3 py-2 rounded-lg text-xs font-bold hover:text-skybrand-400 transition flex items-center gap-2"><i class="fa-solid fa-coins text-yellow-400"></i> CRP MARKETPLACE</button>
+          <button onclick="switchTab('hub')" id="nav-hub" class="nav-btn px-3 py-2 rounded-lg text-xs font-bold hover:text-skybrand-400 transition flex items-center gap-2"><i class="fa-solid fa-cubes text-slate-300"></i> FEED & JOBS</button>
+        </nav>
+
+        <div class="hidden sm:flex items-center space-x-3">
+          <a href="mailto:verchisteconnections@gmail.com" class="p-2.5 rounded-lg border border-skybrand-500/30 text-skybrand-400 hover:bg-skybrand-500/10 transition text-xs" title="Direct Mail VC"><i class="fa-regular fa-envelope"></i> verchisteconnections@gmail.com</a>
+          <button onclick="openAuthModal('signin')" class="px-3 py-2 rounded-lg text-xs font-semibold text-slate-200 hover:text-white transition">SIGN IN</button>
+          <button onclick="openAuthModal('signup')" class="px-4 py-2 rounded-xl bg-gradient-to-r from-skybrand-500 to-blue-600 text-navy-950 font-bold text-xs hover:shadow-[0_0_20px_rgba(0,191,255,0.5)] transition transform active:scale-95">SIGN UP</button>
+        </div>
+
+        <button id="mobile-menu-btn" onclick="toggleMobileMenu()" class="lg:hidden text-2xl text-skybrand-400 p-2"><i class="fa-solid fa-bars"></i></button>
+      </div>
+
+      <div id="mobile-menu" class="hidden lg:hidden bg-navy-900/95 border-b border-skybrand-500/30 px-6 py-4 space-y-3">
+        <button onclick="switchTab('brands'); toggleMobileMenu()" class="block w-full text-left py-2 font-semibold hover:text-skybrand-400 text-sm">BRANDS</button>
+        <button onclick="switchTab('pureskill'); toggleMobileMenu()" class="block w-full text-left py-2 font-semibold hover:text-skybrand-400 text-sm">PURESKILL</button>
+        <button onclick="switchTab('crp'); toggleMobileMenu()" class="block w-full text-left py-2 font-semibold hover:text-skybrand-400 text-sm">CRP MARKETPLACE</button>
+        <button onclick="switchTab('hub'); toggleMobileMenu()" class="block w-full text-left py-2 font-semibold hover:text-skybrand-400 text-sm">FEED & JOBS HUB</button>
+        <div class="pt-3 border-t border-slate-800 flex flex-col gap-2">
+          <button onclick="openAuthModal('signin'); toggleMobileMenu()" class="w-full py-2 rounded-lg border border-skybrand-500/30 text-center font-semibold text-xs">SIGN IN</button>
+          <button onclick="openAuthModal('signup'); toggleMobileMenu()" class="w-full py-2.5 rounded-lg bg-skybrand-500 text-navy-950 font-bold text-center text-xs">SIGN UP</button>
+        </div>
+      </div>
+    </header>
+
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+      <!-- ================= HOMEPAGE TAB ================= -->
+      <div id="tab-home" class="tab-content space-y-20">
+        <section class="text-center pt-8 pb-12 relative">
+          <div class="logo-stage mb-8">
+            <div class="orbit-ring-1"></div>
+            <div class="orbit-ring-2"></div>
+            <div class="absolute inset-0 flex items-center justify-center">
+              <div class="w-24 h-24 rounded-full vc-badge flex flex-col items-center justify-center shadow-[0_0_40px_rgba(0,191,255,0.8)]">
+                <span class="font-heading font-black text-3xl text-navy-950">VC</span>
+                <span class="text-[8px] font-bold tracking-widest text-navy-950 uppercase -mt-1">Verchiste</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-skybrand-500/40 bg-skybrand-500/10 text-skybrand-400 text-xs font-semibold uppercase tracking-wider mb-6">
+            <span class="w-2 h-2 rounded-full bg-skybrand-400 animate-ping"></span>
+            Business Support SaaS & Talent Portal
+          </div>
+
+          <h1 class="text-4xl sm:text-6xl font-heading font-black tracking-tight text-white max-w-4xl mx-auto leading-tight">
+            Connecting Businesses to Students. <br>
+            <span class="text-transparent bg-clip-text bg-gradient-to-r from-skybrand-400 via-sky-200 to-white">Students to Endless Opportunities.</span>
+          </h1>
+
+          <p class="mt-6 text-lg sm:text-xl text-slate-300 max-w-2xl mx-auto font-light leading-relaxed">
+            Drive sales via <strong class="text-skybrand-400 font-semibold">COSMO & CRP Reward Programs</strong> or discover talent with <strong class="text-purple-400 font-semibold">PURESKILL</strong> private psychological profiles.
+          </p>
+
+          <div class="mt-10 flex flex-wrap items-center justify-center gap-4">
+            <button onclick="switchTab('brands')" class="px-8 py-4 rounded-xl bg-gradient-to-r from-skybrand-500 to-blue-600 text-navy-950 font-extrabold text-base shadow-[0_0_30px_rgba(0,191,255,0.4)] hover:shadow-[0_0_40px_rgba(0,191,255,0.7)] hover:-translate-y-0.5 transition"><i class="fa-solid fa-building mr-2"></i> Partner as a Brand</button>
+            <button onclick="switchTab('crp')" class="px-8 py-4 rounded-xl glass-card text-skybrand-400 font-extrabold text-base hover:bg-skybrand-500/10 transition border border-skybrand-500/40"><i class="fa-solid fa-store mr-2"></i> Explore Pre-loaded CRP Products</button>
+          </div>
+
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-16 max-w-4xl mx-auto">
+            <div class="glass-card p-6 rounded-2xl text-center"><div class="text-3xl font-heading font-extrabold text-skybrand-400">₦30,000</div><div class="text-xs text-slate-400 font-medium mt-1 uppercase tracking-wider">China Solar Fan Combo</div></div>
+            <div class="glass-card p-6 rounded-2xl text-center"><div class="text-3xl font-heading font-extrabold text-yellow-400">₦5,000</div><div class="text-xs text-slate-400 font-medium mt-1 uppercase tracking-wider">Commission Per Fan</div></div>
+            <div class="glass-card p-6 rounded-2xl text-center"><div class="text-3xl font-heading font-extrabold text-purple-400">COSMO</div><div class="text-xs text-slate-400 font-medium mt-1 uppercase tracking-wider">Reward Program</div></div>
+            <div class="glass-card p-6 rounded-2xl text-center"><div class="text-3xl font-heading font-extrabold text-emerald-400">100%</div><div class="text-xs text-slate-400 font-medium mt-1 uppercase tracking-wider">Pay-Before-Delivery</div></div>
+          </div>
+        </section>
+      </div>
+
+      <!-- ================= BRANDS TAB ================= -->
+      <div id="tab-brands" class="tab-content hidden space-y-10">
+        <div class="text-center max-w-3xl mx-auto space-y-4">
+          <div class="inline-block px-4 py-1.5 rounded-full border border-skybrand-500/40 bg-skybrand-500/10 text-skybrand-400 text-xs font-semibold uppercase">SaaS Business Partner Request</div>
+          <h1 class="text-3xl sm:text-5xl font-heading font-extrabold text-white">Submit Brand Onboarding Details</h1>
+          <p class="text-slate-300">Tell us about your brand, products, services, and how many student promoters you need. Submitted requests automatically sync to our Admin Dashboard and dispatch to <span class="text-skybrand-400 font-bold">verchisteconnections@gmail.com</span>.</p>
+        </div>
+
+        <div class="max-w-3xl mx-auto glass-card p-8 sm:p-10 rounded-3xl">
+          <form id="brand-request-form" onsubmit="handleBrandSubmit(event)" class="space-y-6">
+            <div class="grid md:grid-cols-2 gap-6">
+              <div>
+                <label class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-2">Company / Brand Name *</label>
+                <input type="text" id="brand-name" required placeholder="e.g. Cosmo Cosmetics / Solar Global" class="w-full px-4 py-3 rounded-xl bg-navy-900 border border-skybrand-500/30 text-white placeholder-slate-500 focus:outline-none focus:border-skybrand-500">
+              </div>
+              <div>
+                <label class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-2">Work Email *</label>
+                <input type="email" id="brand-email" required placeholder="contact@brand.com" class="w-full px-4 py-3 rounded-xl bg-navy-900 border border-skybrand-500/30 text-white placeholder-slate-500 focus:outline-none focus:border-skybrand-500">
+              </div>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-6">
+              <div>
+                <label class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-2">Phone / WhatsApp Number *</label>
+                <input type="tel" id="brand-phone" required placeholder="+234 800 000 0000" class="w-full px-4 py-3 rounded-xl bg-navy-900 border border-skybrand-500/30 text-white placeholder-slate-500 focus:outline-none focus:border-skybrand-500">
+              </div>
+              <div>
+                <label class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-2">Promoter Headcount Required *</label>
+                <select id="brand-talent-num" class="w-full px-4 py-3 rounded-xl bg-navy-900 border border-skybrand-500/30 text-white focus:outline-none focus:border-skybrand-500">
+                  <option value="1-10">1 - 10 Campus Ambassadors</option>
+                  <option value="10-50">10 - 50 Commission Promoters</option>
+                  <option value="50-200">50 - 200 CRP Sellers</option>
+                  <option value="200+">200+ Large Scale Campus Network</option>
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-2">Brand Story & Mission *</label>
+              <textarea id="brand-story" rows="3" required placeholder="Tell us about your brand vision, targets, and market presence..." class="w-full px-4 py-3 rounded-xl bg-navy-900 border border-skybrand-500/30 text-white placeholder-slate-500 focus:outline-none focus:border-skybrand-500"></textarea>
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-2">Products / Services & Commissions offered *</label>
+              <textarea id="brand-products" rows="3" required placeholder="Describe your products, prices, and commission rates (e.g. Solar Fan 30k price / 5k commission)..." class="w-full px-4 py-3 rounded-xl bg-navy-900 border border-skybrand-500/30 text-white placeholder-slate-500 focus:outline-none focus:border-skybrand-500"></textarea>
+            </div>
+
+            <div id="brand-submit-status" class="text-sm font-semibold hidden"></div>
+
+            <div class="pt-4">
+              <button type="submit" id="brand-submit-btn" class="w-full py-4 rounded-xl bg-gradient-to-r from-skybrand-500 to-blue-600 text-navy-950 font-black text-base shadow-[0_0_25px_rgba(0,191,255,0.4)] hover:shadow-[0_0_35px_rgba(0,191,255,0.7)] transition"><i class="fa-regular fa-paper-plane mr-2"></i> Submit Request to VC Admin Dashboard</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- ================= PURESKILL TAB ================= -->
+      <div id="tab-pureskill" class="tab-content hidden space-y-12">
+        <div class="text-center max-w-3xl mx-auto space-y-4">
+          <div class="inline-block px-4 py-1.5 rounded-full border border-purple-500/40 bg-purple-500/10 text-purple-400 text-xs font-semibold uppercase">Private Talent Portfolio Engine</div>
+          <h1 class="text-3xl sm:text-5xl font-heading font-extrabold text-white">PURESKILL Talent Hunt</h1>
+          <p class="text-slate-300">Complete the psychology diagnostic to identify your core talent archetype, build your video portfolio, and save your private profile. Businesses cannot view it <span class="text-purple-400 font-bold">unless you instruct VC to share it</span>.</p>
+        </div>
+
+        <!-- GAMIFIED QUIZ SECTION -->
+        <div class="max-w-2xl mx-auto glass-card p-8 rounded-3xl border border-purple-500/30">
+          <div id="quiz-container">
+            <div class="flex items-center justify-between mb-6">
+              <span class="text-xs font-bold text-purple-400 tracking-wider uppercase">Psychology Talent Diagnostic</span>
+              <span id="quiz-progress" class="text-xs text-slate-400 font-bold">Question 1 of 3</span>
+            </div>
+
+            <div id="quiz-step-1" class="quiz-step space-y-4">
+              <h3 class="text-xl font-bold text-white">When faced with a complex problem in a team, what is your immediate natural reaction?</h3>
+              <div class="space-y-3 pt-2">
+                <button onclick="answerQuiz(1, 'analyst')" class="w-full text-left p-4 rounded-xl bg-navy-900 border border-slate-700 hover:border-purple-400 transition text-sm">A. I break down data, logic, and map out a structured step-by-step solution.</button>
+                <button onclick="answerQuiz(1, 'creator')" class="w-full text-left p-4 rounded-xl bg-navy-900 border border-slate-700 hover:border-purple-400 transition text-sm">B. I brainstorm wild visual ideas, creative content angles, and UI design.</button>
+                <button onclick="answerQuiz(1, 'communicator')" class="w-full text-left p-4 rounded-xl bg-navy-900 border border-slate-700 hover:border-purple-400 transition text-sm">C. I start rallying people, pitching the vision, and pitching potential buyers.</button>
+              </div>
+            </div>
+
+            <div id="quiz-step-2" class="quiz-step space-y-4 hidden">
+              <h3 class="text-xl font-bold text-white">What kind of recognition motivates you most?</h3>
+              <div class="space-y-3 pt-2">
+                <button onclick="answerQuiz(2, 'analyst')" class="w-full text-left p-4 rounded-xl bg-navy-900 border border-slate-700 hover:border-purple-400 transition text-sm">A. Being known as the person whose numbers are always right.</button>
+                <button onclick="answerQuiz(2, 'creator')" class="w-full text-left p-4 rounded-xl bg-navy-900 border border-slate-700 hover:border-purple-400 transition text-sm">B. Seeing something I designed or made get noticed and shared.</button>
+                <button onclick="answerQuiz(2, 'communicator')" class="w-full text-left p-4 rounded-xl bg-navy-900 border border-slate-700 hover:border-purple-400 transition text-sm">C. Closing a deal or convincing a room to say yes.</button>
+              </div>
+            </div>
+
+            <div id="quiz-step-3" class="quiz-step space-y-4 hidden">
+              <h3 class="text-xl font-bold text-white">Pick the task you'd volunteer for first on a new campus project.</h3>
+              <div class="space-y-3 pt-2">
+                <button onclick="answerQuiz(3, 'analyst')" class="w-full text-left p-4 rounded-xl bg-navy-900 border border-slate-700 hover:border-purple-400 transition text-sm">A. Building the budget/tracking spreadsheet.</button>
+                <button onclick="answerQuiz(3, 'creator')" class="w-full text-left p-4 rounded-xl bg-navy-900 border border-slate-700 hover:border-purple-400 transition text-sm">B. Designing the poster, video, or promo content.</button>
+                <button onclick="answerQuiz(3, 'communicator')" class="w-full text-left p-4 rounded-xl bg-navy-900 border border-slate-700 hover:border-purple-400 transition text-sm">C. Pitching the project to potential sponsors.</button>
+              </div>
+            </div>
+
+            <!-- RESULT + PROFILE BUILDER -->
+            <div id="quiz-result" class="hidden space-y-6">
+              <div class="text-center">
+                <div class="text-xs font-bold text-purple-400 uppercase tracking-wider mb-2">Your Talent Archetype</div>
+                <div id="archetype-name" class="text-3xl font-heading font-black text-white"></div>
+                <p id="archetype-desc" class="text-slate-300 text-sm mt-3"></p>
+              </div>
+
+              <div class="border-t border-slate-700 pt-6 space-y-4">
+                <label class="block text-xs font-bold uppercase tracking-wider text-slate-300">Full Name *</label>
+                <input type="text" id="profile-name" placeholder="Your full name" class="w-full px-4 py-3 rounded-xl bg-navy-900 border border-purple-500/30 text-white placeholder-slate-500 focus:outline-none focus:border-purple-400">
+
+                <label class="block text-xs font-bold uppercase tracking-wider text-slate-300">School / Campus *</label>
+                <input type="text" id="profile-school" placeholder="e.g. University of Port Harcourt" class="w-full px-4 py-3 rounded-xl bg-navy-900 border border-purple-500/30 text-white placeholder-slate-500 focus:outline-none focus:border-purple-400">
+
+                <label class="block text-xs font-bold uppercase tracking-wider text-slate-300">Upload Portfolio Video (max 50MB) *</label>
+                <input type="file" id="profile-video" accept="video/*" class="w-full text-sm text-slate-300 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-purple-500 file:text-navy-950 file:font-bold">
+                <div id="video-upload-progress" class="hidden">
+                  <div class="w-full bg-navy-900 rounded-full h-2 mt-2">
+                    <div id="video-progress-bar" class="bg-purple-500 h-2 rounded-full" style="width:0%"></div>
+                  </div>
+                  <div id="video-progress-text" class="text-xs text-slate-400 mt-1">Uploading...</div>
+                </div>
+
+                <label class="flex items-center gap-2 text-xs text-slate-400 pt-2">
+                  <input type="checkbox" id="profile-share-consent" class="rounded">
+                  I authorize VC to share this profile with matched brands (optional — leave unchecked to keep 100% private)
+                </label>
+
+                <div id="profile-save-status" class="text-sm font-semibold hidden"></div>
+
+                <button onclick="savePureSkillProfile()" id="save-profile-btn" class="w-full py-4 rounded-xl bg-gradient-to-r from-purple-500 to-purple-700 text-white font-black text-base shadow-[0_0_25px_rgba(168,85,247,0.4)] hover:shadow-[0_0_35px_rgba(168,85,247,0.7)] transition"><i class="fa-solid fa-lock mr-2"></i> Save My Private PureSkill Profile</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ================= CRP MARKETPLACE TAB ================= -->
+      <div id="tab-crp" class="tab-content hidden space-y-10">
+        <div class="text-center max-w-3xl mx-auto space-y-4">
+          <div class="inline-block px-4 py-1.5 rounded-full border border-yellow-500/40 bg-yellow-500/10 text-yellow-400 text-xs font-semibold uppercase">CRP Reward Marketplace</div>
+          <h1 class="text-3xl sm:text-5xl font-heading font-extrabold text-white">Pre-loaded Commission Reward Products</h1>
+          <p class="text-slate-300">Browse products, buy in before selling to secure your commission slot. All CRP purchases are <span class="text-emerald-400 font-bold">pay-before-delivery</span>.</p>
+        </div>
+
+        <div id="crp-product-grid" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <!-- Populated by JS from Firestore (falls back to static defaults below if empty) -->
+        </div>
+      </div>
+
+      <!-- ================= FEED & JOBS HUB TAB ================= -->
+      <div id="tab-hub" class="tab-content hidden space-y-10">
+        <div class="text-center max-w-3xl mx-auto space-y-4">
+          <div class="inline-block px-4 py-1.5 rounded-full border border-slate-500/40 bg-slate-500/10 text-slate-300 text-xs font-semibold uppercase">Community Feed</div>
+          <h1 class="text-3xl sm:text-5xl font-heading font-extrabold text-white">Open Jobs & Campus Feed</h1>
+          <p class="text-slate-300">Live brand requests and campus job posts appear here as they're approved by VC Admin.</p>
+        </div>
+        <div id="hub-feed" class="max-w-3xl mx-auto space-y-4">
+          <div class="glass-card p-6 rounded-2xl text-center text-slate-400 text-sm">No open postings yet — check back soon.</div>
+        </div>
+      </div>
+
+    </main>
+
+    <footer class="relative z-10 border-t border-skybrand-500/20 py-8 text-center text-xs text-slate-500">
+      &copy; 2026 Verchiste Connections. All rights reserved.
+    </footer>
+  </div>
+
+  <!-- AUTH MODAL -->
+  <div id="auth-modal" class="hidden fixed inset-0 z-[100] modal-overlay flex items-center justify-center p-4">
+    <div class="glass-card w-full max-w-md p-8 rounded-3xl relative">
+      <button onclick="closeAuthModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-xl"></i></button>
+      <h2 id="auth-modal-title" class="text-2xl font-heading font-extrabold text-white mb-6">Sign In</h2>
+      <div class="space-y-4">
+        <input type="email" id="auth-email" placeholder="Email" class="w-full px-4 py-3 rounded-xl bg-navy-900 border border-skybrand-500/30 text-white placeholder-slate-500 focus:outline-none focus:border-skybrand-500">
+        <input type="password" id="auth-password" placeholder="Password" class="w-full px-4 py-3 rounded-xl bg-navy-900 border border-skybrand-500/30 text-white placeholder-slate-500 focus:outline-none focus:border-skybrand-500">
+        <div id="auth-status" class="text-sm font-semibold hidden"></div>
+        <button onclick="handleAuthSubmit()" id="auth-submit-btn" class="w-full py-3 rounded-xl bg-gradient-to-r from-skybrand-500 to-blue-600 text-navy-950 font-bold">Continue</button>
+        <p class="text-xs text-center text-slate-400">
+          <span id="auth-switch-text">Don't have an account?</span>
+          <a href="#" onclick="toggleAuthMode(event)" id="auth-switch-link" class="text-skybrand-400 font-bold">Sign Up</a>
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- HIDDEN ADMIN MODAL (triple-click logo trigger) -->
+  <div id="admin-modal" class="hidden fixed inset-0 z-[100] modal-overlay flex items-center justify-center p-4">
+    <div class="glass-card w-full max-w-lg p-8 rounded-3xl relative">
+      <button onclick="closeAdminModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-xl"></i></button>
+      <h2 class="text-2xl font-heading font-extrabold text-white mb-2">VC Admin Access</h2>
+      <p class="text-xs text-slate-400 mb-6">Restricted — authorized admin accounts only.</p>
+      <input type="email" id="admin-email" placeholder="Admin email" class="w-full px-4 py-3 rounded-xl bg-navy-900 border border-skybrand-500/30 text-white placeholder-slate-500 mb-3">
+      <input type="password" id="admin-password" placeholder="Admin password" class="w-full px-4 py-3 rounded-xl bg-navy-900 border border-skybrand-500/30 text-white placeholder-slate-500 mb-4">
+      <div id="admin-status" class="text-sm font-semibold hidden mb-3"></div>
+      <button onclick="handleAdminLogin()" class="w-full py-3 rounded-xl bg-gradient-to-r from-skybrand-500 to-blue-600 text-navy-950 font-bold">Enter Dashboard</button>
+    </div>
+  </div>
+
+  <!-- ADMIN DASHBOARD (shown after successful admin login) -->
+  <div id="admin-dashboard" class="hidden fixed inset-0 z-[100] bg-navy-950 overflow-y-auto p-6">
+    <div class="max-w-6xl mx-auto space-y-8">
+      <div class="flex items-center justify-between">
+        <h1 class="text-3xl font-heading font-black text-white">VC Admin Dashboard</h1>
+        <button onclick="closeAdminDashboard()" class="px-4 py-2 rounded-lg border border-skybrand-500/30 text-skybrand-400">Close</button>
+      </div>
+      <div>
+        <h2 class="text-lg font-bold text-skybrand-400 mb-3">Brand Requests</h2>
+        <div id="admin-brand-list" class="space-y-3"></div>
+      </div>
+      <div>
+        <h2 class="text-lg font-bold text-purple-400 mb-3">PureSkill Profiles</h2>
+        <div id="admin-profile-list" class="space-y-3"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // =====================================================================
+    // FIREBASE CONFIG — replace with YOUR project's config from the
+    // Firebase console (Project settings > General > Your apps > SDK config)
+    // =====================================================================
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_PROJECT.firebaseapp.com",
+      projectId: "YOUR_PROJECT",
+      storageBucket: "YOUR_PROJECT.appspot.com",
+      messagingSenderId: "YOUR_SENDER_ID",
+      appId: "YOUR_APP_ID"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const auth = firebase.auth();
+    const storage = firebase.storage();
+
+    // ---------------------------------------------------------------
+    // TAB SWITCHING
+    // ---------------------------------------------------------------
+    function switchTab(tabName) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+      document.getElementById('tab-' + tabName).classList.remove('hidden');
+      document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+      const activeBtn = document.getElementById('nav-' + tabName);
+      if (activeBtn) activeBtn.classList.add('active');
+      window.location.hash = tabName;
+      if (tabName === 'crp') loadCRPProducts();
+      if (tabName === 'hub') loadHubFeed();
+    }
+
+    function toggleMobileMenu() {
+      document.getElementById('mobile-menu').classList.toggle('hidden');
+    }
+
+    // Restore tab from URL hash on load
+    window.addEventListener('DOMContentLoaded', () => {
+      const hash = window.location.hash.replace('#', '');
+      const valid = ['brands', 'pureskill', 'crp', 'hub'];
+      if (valid.includes(hash)) switchTab(hash); else switchTab('home');
+      // "home" tab isn't wired to a nav button, show it directly if no hash
+      if (!hash) {
+        document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+        document.getElementById('tab-home').classList.remove('hidden');
+      }
+    });
+
+    // ---------------------------------------------------------------
+    // TRIPLE-CLICK LOGO -> ADMIN LOGIN
+    // ---------------------------------------------------------------
+    let logoClickCount = 0;
+    let logoClickTimer = null;
+    function handleLogoClick(event) {
+      event.preventDefault();
+      logoClickCount++;
+      if (logoClickTimer) clearTimeout(logoClickTimer);
+      logoClickTimer = setTimeout(() => { logoClickCount = 0; }, 800);
+      if (logoClickCount >= 3) {
+        logoClickCount = 0;
+        document.getElementById('admin-modal').classList.remove('hidden');
+      } else {
+        switchTab('home');
+      }
+    }
+
+    function closeAdminModal() { document.getElementById('admin-modal').classList.add('hidden'); }
+    function closeAdminDashboard() { document.getElementById('admin-dashboard').classList.add('hidden'); }
+
+    async function handleAdminLogin() {
+      const email = document.getElementById('admin-email').value;
+      const password = document.getElementById('admin-password').value;
+      const statusEl = document.getElementById('admin-status');
+      try {
+        const cred = await auth.signInWithEmailAndPassword(email, password);
+        // Check an "admins" collection to confirm this uid is authorized —
+        // set this up manually in Firestore for your own admin account(s).
+        const adminDoc = await db.collection('admins').doc(cred.user.uid).get();
+        if (!adminDoc.exists) {
+          statusEl.textContent = 'This account is not authorized as admin.';
+          statusEl.className = 'text-sm font-semibold text-red-400 mb-3';
+          statusEl.classList.remove('hidden');
+          await auth.signOut();
+          return;
+        }
+        closeAdminModal();
+        document.getElementById('admin-dashboard').classList.remove('hidden');
+        loadAdminData();
+      } catch (err) {
+        statusEl.textContent = err.message;
+        statusEl.className = 'text-sm font-semibold text-red-400 mb-3';
+        statusEl.classList.remove('hidden');
+      }
+    }
+
+    async function loadAdminData() {
+      const brandList = document.getElementById('admin-brand-list');
+      const profileList = document.getElementById('admin-profile-list');
+      brandList.innerHTML = '<p class="text-slate-400 text-sm">Loading...</p>';
+      profileList.innerHTML = '<p class="text-slate-400 text-sm">Loading...</p>';
+
+      const brandsSnap = await db.collection('brandRequests').orderBy('createdAt', 'desc').limit(50).get();
+      brandList.innerHTML = brandsSnap.empty ? '<p class="text-slate-400 text-sm">No requests yet.</p>' : '';
+      brandsSnap.forEach(doc => {
+        const d = doc.data();
+        brandList.innerHTML += `<div class="glass-card p-4 rounded-xl text-sm"><strong>${d.brandName}</strong> — ${d.email} — ${d.phone} — ${d.talentNum}<br><span class="text-slate-400">${d.story || ''}</span></div>`;
+      });
+
+      const profilesSnap = await db.collection('pureskillProfiles').orderBy('createdAt', 'desc').limit(50).get();
+      profileList.innerHTML = profilesSnap.empty ? '<p class="text-slate-400 text-sm">No profiles yet.</p>' : '';
+      profilesSnap.forEach(doc => {
+        const d = doc.data();
+        profileList.innerHTML += `<div class="glass-card p-4 rounded-xl text-sm"><strong>${d.name}</strong> (${d.archetype}) — ${d.school} — Shareable: ${d.shareConsent ? 'Yes' : 'No'}${d.videoURL ? ` — <a href="${d.videoURL}" target="_blank" class="text-skybrand-400 underline">View video</a>` : ''}</div>`;
+      });
+    }
+
+    // ---------------------------------------------------------------
+    // AUTH MODAL (regular users)
+    // ---------------------------------------------------------------
+    let authMode = 'signin';
+    function openAuthModal(mode) {
+      authMode = mode;
+      document.getElementById('auth-modal-title').textContent = mode === 'signin' ? 'Sign In' : 'Sign Up';
+      document.getElementById('auth-switch-text').textContent = mode === 'signin' ? "Don't have an account?" : 'Already have an account?';
+      document.getElementById('auth-switch-link').textContent = mode === 'signin' ? 'Sign Up' : 'Sign In';
+      document.getElementById('auth-modal').classList.remove('hidden');
+    }
+    function closeAuthModal() { document.getElementById('auth-modal').classList.add('hidden'); }
+    function toggleAuthMode(e) {
+      e.preventDefault();
+      openAuthModal(authMode === 'signin' ? 'signup' : 'signin');
+    }
+
+    async function handleAuthSubmit() {
+      const email = document.getElementById('auth-email').value;
+      const password = document.getElementById('auth-password').value;
+      const statusEl = document.getElementById('auth-status');
+      statusEl.classList.add('hidden');
+      try {
+        if (authMode === 'signin') {
+          await auth.signInWithEmailAndPassword(email, password);
+        } else {
+          await auth.createUserWithEmailAndPassword(email, password);
+        }
+        closeAuthModal();
+      } catch (err) {
+        statusEl.textContent = err.message;
+        statusEl.className = 'text-sm font-semibold text-red-400';
+        statusEl.classList.remove('hidden');
+      }
+    }
+
+    // ---------------------------------------------------------------
+    // BRAND REQUEST FORM -> FIRESTORE
+    // ---------------------------------------------------------------
+    async function handleBrandSubmit(event) {
+      event.preventDefault();
+      const btn = document.getElementById('brand-submit-btn');
+      const statusEl = document.getElementById('brand-submit-status');
+      btn.disabled = true;
+      btn.textContent = 'Submitting...';
+      try {
+        await db.collection('brandRequests').add({
+          brandName: document.getElementById('brand-name').value,
+          email: document.getElementById('brand-email').value,
+          phone: document.getElementById('brand-phone').value,
+          talentNum: document.getElementById('brand-talent-num').value,
+          story: document.getElementById('brand-story').value,
+          products: document.getElementById('brand-products').value,
+          status: 'pending',
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        statusEl.textContent = 'Request submitted! Our team will reach out shortly.';
+        statusEl.className = 'text-sm font-semibold text-emerald-400';
+        statusEl.classList.remove('hidden');
+        event.target.reset();
+      } catch (err) {
+        statusEl.textContent = 'Something went wrong: ' + err.message;
+        statusEl.className = 'text-sm font-semibold text-red-400';
+        statusEl.classList.remove('hidden');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-regular fa-paper-plane mr-2"></i> Submit Request to VC Admin Dashboard';
+      }
+    }
+
+    // ---------------------------------------------------------------
+    // PURESKILL QUIZ
+    // ---------------------------------------------------------------
+    const quizAnswers = {};
+    const archetypes = {
+      analyst: { name: 'The Analyst', desc: 'You thrive on structure, data, and precision. Brands looking for operations, logistics, or finance-minded promoters will value your clarity.' },
+      creator: { name: 'The Creator', desc: 'You think visually and generate ideas fast. Brands looking for content, design, or campaign creatives will value your imagination.' },
+      communicator: { name: 'The Communicator', desc: 'You connect with people naturally and close deals. Brands looking for sales, outreach, or ambassador roles will value your charisma.' }
+    };
+
+    function answerQuiz(step, archetype) {
+      quizAnswers[step] = archetype;
+      if (step < 3) {
+        document.getElementById('quiz-step-' + step).classList.add('hidden');
+        document.getElementById('quiz-step-' + (step + 1)).classList.remove('hidden');
+        document.getElementById('quiz-progress').textContent = `Question ${step + 1} of 3`;
+      } else {
+        document.getElementById('quiz-step-3').classList.add('hidden');
+        showQuizResult();
+      }
+    }
+
+    function showQuizResult() {
+      const counts = {};
+      Object.values(quizAnswers).forEach(a => counts[a] = (counts[a] || 0) + 1);
+      const top = Object.keys(counts).reduce((a, b) => counts[a] >= counts[b] ? a : b);
+      document.getElementById('archetype-name').textContent = archetypes[top].name;
+      document.getElementById('archetype-desc').textContent = archetypes[top].desc;
+      document.getElementById('quiz-result').classList.remove('hidden');
+      document.getElementById('quiz-result').dataset.archetype = top;
+    }
+
+    // ---------------------------------------------------------------
+    // PURESKILL PROFILE SAVE (with video upload to Firebase Storage)
+    // ---------------------------------------------------------------
+    async function savePureSkillProfile() {
+      const name = document.getElementById('profile-name').value.trim();
+      const school = document.getElementById('profile-school').value.trim();
+      const fileInput = document.getElementById('profile-video');
+      const shareConsent = document.getElementById('profile-share-consent').checked;
+      const archetype = document.getElementById('quiz-result').dataset.archetype;
+      const statusEl = document.getElementById('profile-save-status');
+      const btn = document.getElementById('save-profile-btn');
+
+      if (!name || !school) {
+        statusEl.textContent = 'Please fill in your name and school.';
+        statusEl.className = 'text-sm font-semibold text-red-400';
+        statusEl.classList.remove('hidden');
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = 'Saving...';
+
+      try {
+        let videoURL = null;
+
+        if (fileInput.files.length > 0) {
+          const file = fileInput.files[0];
+          if (file.size > 50 * 1024 * 1024) {
+            throw new Error('Video must be under 50MB.');
+          }
+          const progressWrap = document.getElementById('video-upload-progress');
+          const progressBar = document.getElementById('video-progress-bar');
+          const progressText = document.getElementById('video-progress-text');
+          progressWrap.classList.remove('hidden');
+
+          const storageRef = storage.ref(`pureskill-videos/${Date.now()}_${file.name}`);
+          const uploadTask = storageRef.put(file);
+
+          videoURL = await new Promise((resolve, reject) => {
+            uploadTask.on('state_changed',
+              (snapshot) => {
+                const pct = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
+                progressBar.style.width = pct + '%';
+                progressText.textContent = `Uploading... ${pct}%`;
+              },
+              (error) => reject(error),
+              async () => resolve(await uploadTask.snapshot.ref.getDownloadURL())
+            );
+          });
+        }
+
+        await db.collection('pureskillProfiles').add({
+          name, school, archetype, shareConsent, videoURL: videoURL || null,
+          userId: auth.currentUser ? auth.currentUser.uid : null,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        statusEl.textContent = 'Profile saved privately. You can update it anytime.';
+        statusEl.className = 'text-sm font-semibold text-emerald-400';
+        statusEl.classList.remove('hidden');
+      } catch (err) {
+        statusEl.textContent = 'Error: ' + err.message;
+        statusEl.className = 'text-sm font-semibold text-red-400';
+        statusEl.classList.remove('hidden');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-lock mr-2"></i> Save My Private PureSkill Profile';
+      }
+    }
+
+    // ---------------------------------------------------------------
+    // CRP MARKETPLACE (loads from Firestore 'crpProducts', falls back to defaults)
+    // ---------------------------------------------------------------
+    const defaultCRPProducts = [
+      { name: 'China Solar Fan Combo', price: 30000, commission: 5000, img: null },
+      { name: 'Portable Blender Set', price: 15000, commission: 2500, img: null },
+      { name: 'Wireless Earbuds Pro', price: 22000, commission: 4000, img: null }
+    ];
+
+    async function loadCRPProducts() {
+      const grid = document.getElementById('crp-product-grid');
+      grid.innerHTML = '<p class="text-slate-400 text-sm col-span-full text-center">Loading products...</p>';
+      let products = [];
+      try {
+        const snap = await db.collection('crpProducts').where('active', '==', true).get();
+        snap.forEach(doc => products.push({ id: doc.id, ...doc.data() }));
+      } catch (e) {
+        // fall through to defaults
+      }
+      if (products.length === 0) products = defaultCRPProducts;
+
+      grid.innerHTML = '';
+      products.forEach(p => {
+        grid.innerHTML += `
+          <div class="glass-card p-6 rounded-2xl space-y-3">
+            <div class="h-32 rounded-xl bg-navy-900 flex items-center justify-center text-slate-600"><i class="fa-solid fa-box-open text-3xl"></i></div>
+            <h3 class="font-heading font-bold text-white">${p.name}</h3>
+            <div class="flex justify-between text-sm">
+              <span class="text-slate-400">Price: <span class="text-skybrand-400 font-bold">₦${p.price.toLocaleString()}</span></span>
+              <span class="text-slate-400">Comm: <span class="text-yellow-400 font-bold">₦${p.commission.toLocaleString()}</span></span>
+            </div>
+            <button onclick="alert('Checkout flow goes here — wire up your payment provider (e.g. Paystack/Flutterwave for NGN).')" class="w-full py-2.5 rounded-lg bg-gradient-to-r from-yellow-500 to-yellow-600 text-navy-950 font-bold text-sm">Buy Slot</button>
+          </div>`;
+      });
+    }
+
+    // ---------------------------------------------------------------
+    // HUB FEED (approved brand requests shown as open jobs)
+    // ---------------------------------------------------------------
+    async function loadHubFeed() {
+      const feed = document.getElementById('hub-feed');
+      try {
+        const snap = await db.collection('brandRequests').where('status', '==', 'approved').orderBy('createdAt', 'desc').limit(20).get();
+        if (snap.empty) {
+          feed.innerHTML = '<div class="glass-card p-6 rounded-2xl text-center text-slate-400 text-sm">No open postings yet — check back soon.</div>';
+          return;
+        }
+        feed.innerHTML = '';
+        snap.forEach(doc => {
+          const d = doc.data();
+          feed.innerHTML += `<div class="glass-card p-6 rounded-2xl"><h3 class="font-bold text-white">${d.brandName}</h3><p class="text-sm text-slate-400 mt-1">${d.products}</p><p class="text-xs text-skybrand-400 mt-2">Looking for: ${d.talentNum}</p></div>`;
+        });
+      } catch (e) {
+        feed.innerHTML = '<div class="glass-card p-6 rounded-2xl text-center text-slate-400 text-sm">No open postings yet — check back soon.</div>';
+      }
+    }
+  </script>
+</body>
+</html>
